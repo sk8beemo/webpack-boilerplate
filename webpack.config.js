@@ -1,17 +1,18 @@
-const path = require('path');
-const HTMLWebpackPlugin = require('html-webpack-plugin');
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-const CopyPlugin = require('copy-webpack-plugin');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
-const TerserPlugin = require('terser-webpack-plugin');
+const path = require("path");
+const HTMLWebpackPlugin = require("html-webpack-plugin");
+const { CleanWebpackPlugin } = require("clean-webpack-plugin");
+const CopyPlugin = require("copy-webpack-plugin");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const OptimizeCssAssetsPlugin = require("optimize-css-assets-webpack-plugin");
+const TerserPlugin = require("terser-webpack-plugin");
+const {BundleAnalyzerPlugin} = require("webpack-bundle-analyzer");
 
-const devMode = process.env.NODE_ENV !== 'production';
+const devMode = process.env.NODE_ENV !== "production";
 
 const optimization = () => {
   const config = {
     splitChunks: {
-      chunks: 'all',
+      chunks: "all",
     },
   };
 
@@ -22,31 +23,11 @@ const optimization = () => {
   return config;
 };
 
-module.exports = {
-  context: path.resolve(__dirname, 'src'),
-  mode: 'development',
-  entry: {
-    main: ['@babel/polyfill', './index.js'],
-  },
-  output: {
-    filename: '[name].[fullhash].js',
-    path: path.resolve(__dirname, 'dist'),
-  },
-  devServer: {
-    port: 3000,
-    hot: devMode,
-  },
-  devtool: devMode ? 'source-map' : false,
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, 'src'),
-    },
-  },
-  optimization: optimization(),
-  plugins: [
+const plugins = () => {
+  const result = [
     new HTMLWebpackPlugin({
-      template: './index.html',
-      favicon: './assets/favicon.ico',
+      template: "./index.html",
+      favicon: "./assets/favicon.ico",
       minify: {
         collapseWhitespace: !devMode,
       },
@@ -55,42 +36,72 @@ module.exports = {
     new CopyPlugin({
       patterns: [
         {
-          from: path.resolve(__dirname, 'src/assets/favicon.ico'),
-          to: path.resolve(__dirname, 'dist'),
+          from: path.resolve(__dirname, "src/assets/favicon.ico"),
+          to: path.resolve(__dirname, "dist"),
         },
       ],
     }),
     new MiniCssExtractPlugin({
-      filename: '[name].[fullhash].css',
+      filename: "[name].[fullhash].css",
     }),
-  ],
+  ];
+
+  if (!devMode) {
+    result.push(new BundleAnalyzerPlugin());
+  }
+
+  return result;
+};
+
+module.exports = {
+  context: path.resolve(__dirname, "src"),
+  mode: "development",
+  entry: {
+    main: ["@babel/polyfill", "./index.js"],
+  },
+  output: {
+    filename: "[name].[fullhash].js",
+    path: path.resolve(__dirname, "dist"),
+  },
+  devServer: {
+    port: 3000,
+    hot: devMode,
+  },
+  devtool: devMode ? "source-map" : false,
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "src"),
+    },
+  },
+  optimization: optimization(),
+  plugins: plugins(),
   module: {
     rules: [
       {
         test: /\.m?js$/,
         exclude: /node_modules/,
         use: {
-          loader: 'babel-loader',
+          loader: "babel-loader",
           options: {
-            presets: ['@babel/preset-env'],
+            presets: ["@babel/preset-env"],
           },
         },
       },
       {
         test: /\.css$/,
-        use: [MiniCssExtractPlugin.loader, 'css-loader'],
+        use: [MiniCssExtractPlugin.loader, "css-loader"],
       },
       {
         test: /\.s[ac]ss$/,
-        use: [MiniCssExtractPlugin.loader, 'css-loader', 'sass-loader'],
+        use: [MiniCssExtractPlugin.loader, "css-loader", "sass-loader"],
       },
       {
         test: /\.(png|svg|jpg|gif)$/,
-        use: ['file-loader'],
+        use: ["file-loader"],
       },
       {
         test: /\.(ttf|woff|woff2|eot)$/,
-        use: ['file-loader'],
+        use: ["file-loader"],
       },
     ],
   },
